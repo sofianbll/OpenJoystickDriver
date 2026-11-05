@@ -26,6 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # `check schemas` compares the CLI output schema with the last release tag.
           fetch-depth: 0
           fetch-tags: true
@@ -45,7 +46,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          for dependency in bun markdownlint-cli2 pkg-config pyright ruff sdl3 shellcheck swift-format swiftlint xmake; do
+          for dependency in bun just markdownlint-cli2 pkg-config pyright ruff sdl3 shellcheck swift-format swiftlint xmake; do
             brew list --versions "$dependency" >/dev/null 2>&1 || brew install "$dependency"
           done
           bun install --frozen-lockfile --ignore-scripts
@@ -60,56 +61,79 @@ jobs:
           path: .build/catalog-sources
           key: catalog-sources-${{ hashFiles('ControllerSources.lock.json') }}
 
-      - name: Verify generated controller catalog
+      - name: Build package and run focused offline tests
         run: |
-          ./Scripts/ojd catalog regenerate --check
-          ./Scripts/ojd errors regenerate --check
-          ./Scripts/ojd vocabulary regenerate --check
+          python3 - <<'PY'
+          from pathlib import Path
+          from Scripts.Command.execution import (
+              PROJECT_DIR,
+              executed_test_count,
+              run_without_warnings,
+              swift_command,
+          )
 
-      - name: Check controller records
+          focused = (
+              "SwitchPro|VirtualHostReport|UserSpaceInputReportState|ReportSender|"
+              "VirtualHIDProfile|VirtualDeviceTests|VirtualGamepadMapping|VirtualCommandTests|"
+              "VirtualFeed|EndpointMessages|InputTestPresentation|IOHIDVirtualDevicePublisher"
+          )
+          commands = [
+              ("build", ["build", "--build-tests"]),
+              ("focused", ["test", "--skip-build", "--no-parallel", "--filter", focused]),
+          ]
+          for label, arguments in commands:
+              status, output = run_without_warnings(swift_command(arguments), PROJECT_DIR)
+              Path(f".build/switch-pro-ci-{label}.log").write_text(output)
+              if status:
+                  raise SystemExit(status)
+              if label == "focused" and executed_test_count(output) == 0:
+                  raise SystemExit("Focused test run executed no tests")
+          PY
+
+      - name: Generate equivalence snapshots with Swift
         run: |
-          ./Scripts/ojd check profiles
+          set -o pipefail
+          ./Scripts/ojd snapshots write 2>&1 | tee .build/switch-pro-ci-snapshots.log
 
-      - name: Check Python
+      - name: Reject snapshot changes outside the Nintendo sections
         run: |
-          ruff format --check Scripts Tests/RepositoryScripts
-          ruff check Scripts Tests/RepositoryScripts
-          pyright
-          .build/schema-validator/bin/python -m unittest discover -s Tests/RepositoryScripts
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          from Scripts.Quality.equivalence_snapshots import parse_header, parse_sections
 
-      - name: Check the platform split
-        run: python3 Scripts/Quality/check_neutral_core_imports.py
+          expected = {
+              "Tests/EquivalenceSnapshots/sdl-mappings.txt": "SwitchPro",
+              "Tests/EquivalenceSnapshots/output-mapping.txt": "switch-pro",
+          }
+          changed = set(subprocess.check_output(
+              ["git", "diff", "--name-only"], text=True
+          ).splitlines())
+          assert changed <= set(expected), f"Unexpected generated changes: {changed}"
+          for name, section in expected.items():
+              before = subprocess.check_output(["git", "show", f"HEAD:{name}"], text=True)
+              after = Path(name).read_text()
+              assert parse_header(before) == parse_header(after), name
+              recorded, generated = parse_sections(before), parse_sections(after)
+              assert set(generated) == set(recorded) | {section}, name
+              assert all(generated[key] == value for key, value in recorded.items()
+                         if key != section), name
+          print("Only Nintendo sections may differ; existing persona sections are preserved.")
+          PY
 
-      - name: Check shell
-        run: find Scripts -type f \( -name '*.sh' -o -name ojd \) -print0 | xargs -0 shellcheck --external-sources --source-path=SCRIPTDIR
-
-      - name: Check Markdown
-        run: git ls-files -z -co --exclude-standard -- '*.md' ':!.agents/' | xargs -0 markdownlint-cli2
-
-      - name: Check JSON formatting
-        run: biome="$(python3 -m Scripts.Quality.biome_binary "$PWD")" && git ls-files -z -co --exclude-standard -- '*.json' '*.jsonc' | xargs -0 "$biome" ci
-
-      - name: Check native tools and the WebRTC bridge package
-        run: ./Scripts/ojd check tools
-
-      - name: Check schemas
-        run: ./Scripts/ojd check schemas
-
-      - name: Test macOS 14 parser compatibility
+      - name: Complete repository checks
         run: |
-          ./Scripts/ojd test parsers-macos14
-          ./Scripts/ojd snapshots check
+          set -o pipefail
+          just check 2>&1 | tee .build/switch-pro-ci-full.log
 
-      - name: Check generated DriverKit project
-        run: |
-          test "$OJD_USE_LOCAL_SWIFTERKIT" = "0"
-          ./Scripts/ojd check driverkit
-
-      - name: Check Swift formatting and lint
-        run: |
-          swift-format lint --recursive --strict Package.swift Sources Tests Tools
-          swiftlint lint --no-cache --strict
-          python3 Scripts/Quality/check_localization_keys.py
-
-      - name: Build and test package
-        run: ./Scripts/ojd check swift
+      - name: Upload validation logs and Swift-generated snapshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: switch-pro-validation-${{ github.sha }}
+          path: |
+            .build/switch-pro-ci-*.log
+            Tests/EquivalenceSnapshots/sdl-mappings.txt
+            Tests/EquivalenceSnapshots/output-mapping.txt
+          if-no-files-found: error
+          retention-days: 7
