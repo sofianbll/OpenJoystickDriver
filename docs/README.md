@@ -53,6 +53,7 @@ This directory holds the development notes and hardware-evidence records for Ope
 - [Third-party PS3 controllers](testing/ps3-third-party.md): Non-Sony PS3 pads, sticks and adapters that do not speak Sony's protocol.
 - [Third-party DualSense controllers](testing/dualsense-third-party.md): Non-Sony PS5 pads, sticks and receivers that speak the DualSense protocol.
 - [Wired Switch input-only pads](testing/switch-input-only.md): Licensed wired Switch pads that send one fixed HID report.
+- [Switch Pro virtual output](testing/switch-pro-virtual-output.md): Offline checks and signed-build evidence for the opt-in Nintendo output.
 - [Switch 2 controllers over USB](testing/switch-2.md): The Switch 2 Pro Controller, Joy-Con 2 and NSO GameCube controller over USB.
 - [Steam Controller (2026, Triton)](testing/steam-triton.md): The 2026 Steam Controller over USB, Bluetooth LE and its dongles.
 - [Test Steam Controller Hardware](testing/steam-controller.md): The original Steam Controller over USB, its wireless receiver, and Bluetooth LE.

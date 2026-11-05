@@ -1,0 +1,16 @@
+{
+  "apiVersion": "openjoystickdriver/v1alpha1",
+  "kind": "VirtualDevice",
+  "persona": "SwitchPro",
+  "layout": "NintendoSwitchPro",
+  "transport": "USB",
+  "worksWithDefaultSDLHints": true,
+  "labels": "Nintendo",
+  "identity": {
+    "vendorID": 1406,
+    "productID": 8201,
+    "version": 528,
+    "productName": "Pro Controller",
+    "manufacturer": "Nintendo Co., Ltd."
+  }
+}

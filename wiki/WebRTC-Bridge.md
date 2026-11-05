@@ -42,8 +42,9 @@ This is the output of `ojd-webrtc-bridge --help`:
 
 ```text
 usage: ojd-webrtc-bridge --role host|player [--signal offer|answer] [--socket PATH]
-       [--token-name NAME] [--controller ID] [--persona Generic|SDLCompatible]
+       [--token-name NAME] [--controller ID] [--persona PERSONA]
        [--ice-server URL]...
+PERSONA: Generic|SDLCompatible|GameControllerCompatible|SwitchPro (default: Generic).
 Set OJD_TOKEN to the token that `ojd access grant --token NAME` printed.
 The offer and the answer are one line each: the bridge prints its own on stdout and reads the
 peer's from stdin. The player offers by default and the host answers.
@@ -54,7 +55,7 @@ peer's from stdin. The player offers by default and the host answers.
 - `--socket PATH`: Give the path of the endpoint socket. Without it, the bridge runs `ojd --json access status` to find the path.
 - `--token-name NAME`: Give the name of the token. The default is `bridge`.
 - `--controller ID`: Give the controller for the `player` role, as the ID from `ojd controller list`. Without it, the player uses the first controller that the endpoint reports.
-- `--persona Generic|SDLCompatible`: Choose how the virtual gamepad of the `host` role appears. The default is `Generic`.
+- `--persona PERSONA`: Choose `Generic`, `SDLCompatible`, `GameControllerCompatible` or `SwitchPro` for the virtual gamepad of the `host` role. The default is `Generic`. Consumer compatibility for `SwitchPro` is not verified.
 - `--ice-server URL`: Add a STUN or TURN server. You can repeat this option. Without it, the bridge uses only local addresses, which is enough for two Macs on one network.
 
 The environment variable `OJD_TOKEN` must hold the token. The bridge refuses to start without it.

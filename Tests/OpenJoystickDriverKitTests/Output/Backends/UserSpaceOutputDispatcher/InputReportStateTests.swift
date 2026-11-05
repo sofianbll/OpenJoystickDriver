@@ -89,15 +89,18 @@ struct UserSpaceInputReportStateTests {
       var expected = compoundState()
 
       let active = reportState.update { $0 = expected }
-      #expect(active == format.buildInputReport(from: expected), "\(profile)")
+      #expect(active == format.buildInputReport(from: expected, packetTimer: 1), "\(profile)")
       #expect(active != neutral, "\(profile)")
 
       expected.rightStickX = 12_345
       let updated = reportState.update { $0.rightStickX = expected.rightStickX }
-      #expect(updated == format.buildInputReport(from: expected), "\(profile)")
+      #expect(updated == format.buildInputReport(from: expected, packetTimer: 2), "\(profile)")
 
       let released = reportState.update { $0 = VirtualGamepadState() }
-      #expect(released == neutral, "\(profile)")
+      #expect(
+        released == format.buildInputReport(from: VirtualGamepadState(), packetTimer: 3),
+        "\(profile)"
+      )
     }
   }
 
@@ -105,6 +108,7 @@ struct UserSpaceInputReportStateTests {
   func everyVirtualHIDProfileFormatExplicitlyClassifiesSpecialControlSupport() throws {
     let supported: [VirtualHIDProfileID: Set<SpecialControl>] = [
       .sdlCompatible: [], .generic: [.share], .gameControllerCompatible: [.share],
+      .switchPro: [.share],
     ]
     #expect(Set(supported.keys) == Set(VirtualHIDProfileID.allCases))
 

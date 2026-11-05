@@ -55,17 +55,17 @@ struct EndpointMessagesTests {
     }
   }
 
-  @Test
-  func aFeedSessionNamesItsPersona() throws {
+  @Test(arguments: VirtualHIDProfileID.allCases)
+  func aFeedSessionNamesItsPersona(profile: VirtualHIDProfileID) throws {
     let object = try #require(
       try JSONSerialization.jsonObject(
-        with: Data(Self.encoded(EndpointFeedSession(as: .sdlCompatible)).utf8)
+        with: Data(Self.encoded(EndpointFeedSession(as: profile)).utf8)
       ) as? [String: String]
     )
-    #expect(object["as"] == "SDLCompatible")
+    #expect(object["as"] == profile.rawValue)
     #expect(
       VirtualHIDProfileID.allCases.map(\.rawValue).sorted() == [
-        "GameControllerCompatible", "Generic", "SDLCompatible",
+        "GameControllerCompatible", "Generic", "SDLCompatible", "SwitchPro",
       ]
     )
   }

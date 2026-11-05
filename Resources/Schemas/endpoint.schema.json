@@ -199,7 +199,12 @@
       }
     },
     "persona": {
-      "enum": ["Generic", "SDLCompatible", "GameControllerCompatible"],
+      "enum": [
+        "Generic",
+        "SDLCompatible",
+        "GameControllerCompatible",
+        "SwitchPro"
+      ],
       "description": "The persona id of the virtual gamepad."
     },
     "frame": {

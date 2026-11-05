@@ -2,12 +2,12 @@ import Foundation
 
 /// Identifier of one exact published virtual HID ABI.
 ///
-/// These are the only three personas OJD recognizes: `SDLCompatible`, `Generic` and
-/// `GameControllerCompatible`. Decoding any other raw value fails.
+/// Each persona has one published identity and report layout. Other raw values fail decoding.
 public enum VirtualHIDProfileID: String, CaseIterable, Codable, Sendable {
   case sdlCompatible = "SDLCompatible"
   case generic = "Generic"
   case gameControllerCompatible = "GameControllerCompatible"
+  case switchPro = "SwitchPro"
 
   /// The id of the persona on the command line: the lowercase kebab-case form of its name.
   public var commandLineName: String { CommandLineName.kebab(rawValue) }
@@ -17,6 +17,7 @@ public enum VirtualHIDProfileID: String, CaseIterable, Codable, Sendable {
     switch VirtualDevice.definition(of: self).layout {
     case .xboxOneGIP?: return XboxOneGIPHIDProfile()
     case .xboxSeriesBluetooth?: return XboxSeriesBluetoothHIDProfile()
+    case .nintendoSwitchPro?: return SwitchProHIDProfile()
     case .ojdGenericGamepad?, nil: return OJDGenericHIDProfile()
     }
   }
@@ -47,6 +48,7 @@ public enum VirtualHIDProfileID: String, CaseIterable, Codable, Sendable {
     case .sdlCompatible: return Control.xboxLayout
     // The Xbox Series Bluetooth report: the Xbox layout, Guide and Share.
     case .gameControllerCompatible: return Control.xboxLayout.union([.guide, .capture])
+    case .switchPro: return Control.xboxLayout.union([.guide, .capture])
     // The generic layout: the frozen 32 buttons, the hat and the six named axes. Today's report
     // carries only its first 16 buttons.
     case .generic:
@@ -146,6 +148,26 @@ struct XboxSeriesBluetoothHIDProfile: VirtualHIDProfile {
   ) -> ControllerOutputCommand? {
     ReportFormatCodec.consumerOutput(type: type, reportID: reportID, bytes: bytes, in: format)
   }
+}
+
+/// Nintendo core input. Host initialization replies are handled by the device's ordered sender.
+struct SwitchProHIDProfile: VirtualHIDProfile {
+  let id = VirtualHIDProfileID.switchPro
+  private let format = SwitchProHIDReportFormat()
+
+  var identity: VirtualDeviceProfile { id.identity }
+  var descriptor: [UInt8] { format.descriptor }
+  var reportFormat: any VirtualGamepadReportFormat { format }
+
+  func inputReport(for state: ControllerState) -> [UInt8] {
+    ReportFormatCodec.inputReport(for: state, in: format)
+  }
+
+  func consumerOutput(
+    type: VirtualHostReportType,
+    reportID: UInt32,
+    bytes: [UInt8]
+  ) -> ControllerOutputCommand? { nil }
 }
 
 /// `Generic` over the OJD generic gamepad, an approximation of the specified ABI.

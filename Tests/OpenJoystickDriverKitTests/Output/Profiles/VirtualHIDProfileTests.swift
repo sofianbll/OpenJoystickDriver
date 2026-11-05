@@ -6,10 +6,10 @@ import Testing
 
 struct VirtualHIDProfileTests {
   @Test
-  func exactlyTheThreeApprovedProfileIDsExist() {
+  func theProfileIDsIncludeTheExplicitNintendoOutput() {
     #expect(
       VirtualHIDProfileID.allCases.map(\.rawValue) == [
-        "SDLCompatible", "Generic", "GameControllerCompatible",
+        "SDLCompatible", "Generic", "GameControllerCompatible", "SwitchPro",
       ]
     )
   }
@@ -17,7 +17,7 @@ struct VirtualHIDProfileTests {
   @Test(arguments: [
     "generic-hid", "automatic", "sdl2-3", "apple-gamecontroller", "SDLCompatible-v2",
     "SdlCompatible",
-    "NotAPersona", "",
+    "NotAPersona", "switch-pro", "switchpro", "SwitchPro-v2", "",
   ])
   func anyOtherProfileIDIsRejected(rawValue: String) throws {
     #expect(VirtualHIDProfileID(rawValue: rawValue) == nil)
@@ -50,6 +50,26 @@ struct VirtualHIDProfileTests {
     let neutral = profile.inputReport(for: .neutral)
     #expect(neutral == ProtocolPacketFixtures.XboxOneGIP.neutralInputReport)
     #expect(neutral == XboxOneGIPHIDReportFormat().buildInputReport(from: VirtualGamepadState()))
+  }
+
+  @Test
+  func switchProHasNintendoIdentityAndIsAnExplicitOverride() throws {
+    let profile = try VirtualHIDProfileID.switchPro.makeProfile()
+    #expect(profile.identity.vendorID == 1406)
+    #expect(profile.identity.productID == 8201)
+    #expect(profile.identity.versionNumber == 528)
+    #expect(profile.identity.transport == "USB")
+    #expect(profile.identity.presentation.glyphFamily == .nintendo)
+    #expect(VirtualHIDProfileID.switchPro.commandLineName == "switch-pro")
+    #expect(profile.inputReport(for: .neutral).count == 64)
+    #expect(profile.inputReport(for: .neutral).first == 0x30)
+    #expect(!VirtualHIDProfileSelector.automaticOrder.contains(.switchPro))
+    let selected = try VirtualHIDProfileSelector.select(
+      controls: VirtualHIDProfileID.switchPro.representableControls,
+      override: .switchPro
+    )
+    #expect(selected.profileID == .switchPro)
+    #expect(selected.source == .override)
   }
 
   @Test

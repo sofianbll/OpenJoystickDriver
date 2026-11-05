@@ -27,6 +27,12 @@ final class RecordingReportFormat: VirtualGamepadReportFormat, @unchecked Sendab
     return report
   }
 
+  func buildInputReport(from state: VirtualGamepadState, packetTimer: UInt8) -> [UInt8] {
+    let report = base.buildInputReport(from: state, packetTimer: packetTimer)
+    lock.withLock { states[report] = state }
+    return report
+  }
+
   func buildAuxiliaryInputReports(from state: VirtualGamepadState) -> [[UInt8]] {
     base.buildAuxiliaryInputReports(from: state)
   }

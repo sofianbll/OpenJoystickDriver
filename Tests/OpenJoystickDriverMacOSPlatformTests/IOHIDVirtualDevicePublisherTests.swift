@@ -8,6 +8,23 @@ import Testing
 
 struct IOHIDVirtualDevicePublisherTests {
   @Test
+  func nintendoPropertiesCarryTheDescriptorAndBothNumberedReportSizes() throws {
+    let profile = try VirtualHIDProfileID.switchPro.makeProfile()
+    let properties = IOHIDVirtualDevicePublisher.deviceProperties(
+      profile: profile.identity,
+      format: profile.reportFormat,
+      identifier: LogicalControllerID(vendorID: 1, productID: 2)
+    )
+    #expect(properties[kIOHIDVendorIDKey as String] as? Int == 1406)
+    #expect(properties[kIOHIDProductIDKey as String] as? Int == 8201)
+    #expect(properties[kIOHIDVersionNumberKey as String] as? Int == 528)
+    #expect(properties[kIOHIDTransportKey as String] as? String == "USB")
+    #expect(properties[kIOHIDMaxInputReportSizeKey as String] as? Int == 64)
+    #expect(properties[kIOHIDMaxOutputReportSizeKey as String] as? Int == 64)
+    #expect(properties[kIOHIDReportDescriptorKey as String] as? Data == Data(profile.descriptor))
+  }
+
+  @Test
   func failedCreateIsExplainedByMissingPermissionsOrReportedAsCreateFailure() {
     let classify = IOHIDVirtualDevicePublisher.creationFailure
     #expect(

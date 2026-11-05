@@ -1,10 +1,30 @@
 import Foundation
 
-/// Decodes the output reports a consumer sends to a virtual format into the output command it
-/// requests. The Xbox One GIP rumble report (report ID 9) and the Xbox Series Bluetooth rumble
-/// report (report ID 3) are the only output reports any format declares; the generic format is
-/// input-only.
+/// A host request can control the physical pad, request protocol replies, or explicitly do neither.
+struct ConsumerOutputResponse: Sendable {
+  let command: ControllerOutputCommand?
+  let reports: [[UInt8]]
+}
+
+/// Routes Nintendo initialization to protocol replies and Xbox rumble to physical output commands.
+/// The generic format is input-only.
 enum ConsumerOutputCodec {
+  static func response(
+    _ request: VirtualHostReportRequest,
+    in format: some VirtualGamepadReportFormat,
+    state: VirtualGamepadState,
+    packetTimer: UInt8
+  ) throws(VirtualHostReportError) -> ConsumerOutputResponse {
+    guard request.type == .output else { throw .unsupported }
+    if let nintendo = format as? SwitchProHIDReportFormat {
+      return ConsumerOutputResponse(
+        command: nil,
+        reports: try nintendo.reply(to: request, state: state, packetTimer: packetTimer)
+      )
+    }
+    return ConsumerOutputResponse(command: try decode(request, in: format), reports: [])
+  }
+
   static let xboxOneReportID = XboxOneGIPHIDDescriptor.rumbleReportID
   static let xboxOneReportPayloadSize = XboxOneGIPHIDDescriptor.rumbleReportPayloadSize
   static let xboxSeriesReportID = XboxSeriesBluetoothHIDDescriptor.rumbleReportID

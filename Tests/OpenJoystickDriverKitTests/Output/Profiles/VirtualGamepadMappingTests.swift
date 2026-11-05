@@ -5,6 +5,20 @@ import Testing
 
 struct VirtualGamepadMappingTests {
   @Test
+  func nintendoPackedProtocolFieldsDoNotInventGenericHIDBindings() throws {
+    let mapping = try VirtualHIDProfileID.switchPro.gamepadMapping()
+    #expect(mapping.guid == "030000007e0500000920000010020000")
+    #expect(mapping.w3cID == "Pro Controller (Vendor: 57e Product: 2009)")
+    #expect(mapping.probes.allSatisfy { $0.binding == nil })
+    #expect(Set(mapping.unmapped) == VirtualHIDProfileID.switchPro.representableControls)
+    #expect(mapping.w3cButtons.isEmpty)
+    #expect(mapping.w3cAxes.isEmpty)
+    #expect(
+      mapping.sdlMapping == "030000007e0500000920000010020000,Pro Controller,,platform:Mac OS X,"
+    )
+  }
+
+  @Test
   func theGenericPersonaUsesTheCRCLessGUIDAndThePublishedButtonUsages() throws {
     let mapping = try VirtualHIDProfileID.generic.gamepadMapping()
     #expect(mapping.guid == "03000000091200004f4a000008040000")
@@ -54,7 +68,7 @@ struct VirtualGamepadMappingTests {
       mapping.w3cAxes.allSatisfy { axes[$0.index] == $0.control.rawValue },
       "\(mapping.w3cAxes)"
     )
-    #expect(mapping.w3cAxes.count == 4)
+    #expect(mapping.w3cAxes.count == (id == .switchPro ? 0 : 4))
     #expect(mapping.w3cButtons.map(\.index) == mapping.w3cButtons.map(\.index).sorted())
   }
 

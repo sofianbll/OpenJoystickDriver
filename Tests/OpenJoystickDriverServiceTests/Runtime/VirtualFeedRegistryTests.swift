@@ -15,6 +15,24 @@ struct VirtualFeedRegistryTests {
   }
 
   @Test(.timeLimit(.minutes(1)))
+  func nintendoFeedUsesItsOwnIdentityWithoutAPhysicalRecord() async throws {
+    let factory = FakeFeedFactory()
+    let registry = factory.registry()
+    let session = try await registry.open(profile: "SwitchPro")
+    let device = try #require(factory.devices.first)
+    #expect(device.profile == .switchPro)
+    let identifier = try #require(device.activated)
+    #expect(identifier.model.vendorID == 1406)
+    #expect(identifier.model.productID == 8201)
+    let frame = VirtualFeedFrame(buttons: [.guide, .capture], axes: [.leftStickX: 0.5])
+    #expect(registry.exchange(token: session.token, frames: [frame]).accepted == 1)
+    await waitUntil("Nintendo feed frame is delivered") { !device.sent.isEmpty }
+    #expect(device.sent == [frame.gamepadState])
+    #expect(await registry.close(token: session.token))
+    #expect(device.closeCount == 1)
+  }
+
+  @Test(.timeLimit(.minutes(1)))
   func aFeedPublishesItsProfileSendsFramesAndReturnsTheHostsCommands() async throws {
     let factory = FakeFeedFactory()
     let registry = factory.registry()

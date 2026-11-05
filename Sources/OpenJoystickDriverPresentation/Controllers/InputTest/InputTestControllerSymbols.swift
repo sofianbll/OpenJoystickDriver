@@ -40,7 +40,63 @@
       switch glyphFamily {
       case .xbox: return xbox
       case .generic: return generic
+      case .nintendo: return nintendo
       }
+    }
+
+    private static var nintendo: Self {
+      let base = generic
+      return Self(
+        leftShoulder: Control(
+          InputTestButtonPresentation.localizedTitle(for: .leftShoulder),
+          fallbackText: "L"
+        ),
+        leftTrigger: Control(
+          InputTestButtonPresentation.localizedTitle(for: .leftTrigger),
+          fallbackText: "ZL"
+        ),
+        rightTrigger: Control(
+          InputTestButtonPresentation.localizedTitle(for: .rightTrigger),
+          fallbackText: "ZR"
+        ),
+        rightShoulder: Control(
+          InputTestButtonPresentation.localizedTitle(for: .rightShoulder),
+          fallbackText: "R"
+        ),
+        view: Control(
+          InputTestButtonPresentation.localizedTitle(for: .back),
+          symbol: "minus.circle",
+          fallbackText: "-"
+        ),
+        guide: base.guide,
+        menu: Control(
+          InputTestButtonPresentation.localizedTitle(for: .start),
+          symbol: "plus.circle",
+          fallbackText: "+"
+        ),
+        northFace: Control(
+          OJDLocalized.string("ui.inputTest.xButton"),
+          symbol: "x.circle",
+          fallbackText: "X"
+        ),
+        westFace: Control(
+          OJDLocalized.string("ui.inputTest.yButton"),
+          symbol: "y.circle",
+          fallbackText: "Y"
+        ),
+        eastFace: Control(
+          OJDLocalized.string("ui.inputTest.aButton"),
+          symbol: "a.circle",
+          fallbackText: "A"
+        ),
+        southFace: Control(
+          OJDLocalized.string("ui.inputTest.bButton"),
+          symbol: "b.circle",
+          fallbackText: "B"
+        ),
+        leftStickClick: base.leftStickClick,
+        rightStickClick: base.rightStickClick
+      )
     }
 
     private static var xbox: Self {

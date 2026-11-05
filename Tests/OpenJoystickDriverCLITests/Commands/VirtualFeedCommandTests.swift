@@ -49,7 +49,8 @@ struct VirtualFeedCommandTests {
   private static func run(
     _ service: FakeService,
     input lines: [String],
-    _ arguments: [String] = []
+    _ arguments: [String] = [],
+    profile: VirtualHIDProfileID = .generic
   ) async -> CLIRun {
     let input: @Sendable () -> AsyncStream<String> = {
       AsyncStream { continuation in
@@ -58,7 +59,7 @@ struct VirtualFeedCommandTests {
       }
     }
     return await VirtualFeedCommand.$standardInputLines.withValue(input) {
-      await service.run(["virtual", "feed", "--as", "generic"] + arguments)
+      await service.run(["virtual", "feed", "--as", profile.commandLineName] + arguments)
     }
   }
 
@@ -73,22 +74,25 @@ struct VirtualFeedCommandTests {
     }
   }
 
-  @Test
-  func everyFrameReachesTheFeedInOrderAndTheFeedClosesWhenTheInputEnds() async throws {
+  @Test(arguments: VirtualHIDProfileID.allCases)
+  func everyFrameReachesTheFeedInOrderAndTheFeedClosesWhenTheInputEnds(
+    profile: VirtualHIDProfileID
+  ) async throws {
     let service = try Self.service()
     let result = await Self.run(
       service,
       input: [
         #"{"buttons":["South"],"holdMilliseconds":50}"#, "{}", "",
         #"{"buttons":["East"],"dpad":["DpadUp"],"axes":{"LeftStickY":0.5}}"#, "{}",
-      ]
+      ],
+      profile: profile
     )
 
     #expect(result.code == 0, "\(result.standardError)")
     #expect(result.standardOutput.isEmpty)
     let opened = try #require(service.arguments(of: .openVirtualFeed).first)
     let open = try JSONDecoder().decode(LocalServiceRPCVirtualFeedOpenArguments.self, from: opened)
-    #expect(open.profile == "Generic")
+    #expect(open.profile == profile.rawValue)
     let exchanges = try Self.exchanges(service)
     #expect(exchanges.allSatisfy { $0.token == Self.token })
     #expect(

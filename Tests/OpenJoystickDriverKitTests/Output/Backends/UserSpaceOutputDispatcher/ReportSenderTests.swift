@@ -203,6 +203,103 @@ private final class OutputRecorder: @unchecked Sendable {
 
 struct ReportSenderTests {
   @Test(.timeLimit(.minutes(1)))
+  func nintendoEntriesKeepIndependentReplyStreamsWhenOneCloses() async throws {
+    let inputs = (0..<2).map { _ in UserSpaceInputReportState(format: SwitchProHIDReportFormat()) }
+    let backends = (0..<2).map { _ in OrderedReportBackend() }
+    let entries = (0..<2).map {
+      UserSpaceOutputDispatcher.Entry(backend: backends[$0], inputReportState: inputs[$0])
+    }
+    let handlers = (0..<2).map { index in
+      UserSpaceHostReportHandler(
+        identifier: LogicalControllerID(vendorID: 1406, productID: UInt16(8201 + index)),
+        input: inputs[index],
+        sender: entries[index].sender,
+        isOpen: { true },
+        onOutput: nil,
+        onRumbleStatus: { _ in }
+      )
+    }
+    let request: [UInt8] = [0x01, 0] + [UInt8](repeating: 0, count: 8) + [0x02]
+    for handler in handlers {
+      try await handler.setReport(type: .output, reportID: 1, bytes: request).value()
+    }
+    #expect(backends.map { $0.snapshot().reports.first?[1] } == [1, 1])
+    await entries[0].close()
+    try await handlers[1].setReport(type: .output, reportID: 1, bytes: request).value()
+    #expect(backends[0].snapshot().reports.count == 1)
+    #expect(backends[1].snapshot().reports.map { $0[1] } == [1, 2])
+    #expect(backends[0].snapshot().closes == 1)
+    #expect(backends[1].snapshot().closes == 0)
+    await entries[1].close()
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func nintendoRepliesFollowInputAndPreserveHeldControls() async throws {
+    let gate = ReportSendGate()
+    let backend = OrderedReportBackend(gate: gate)
+    let input = UserSpaceInputReportState(format: SwitchProHIDReportFormat())
+    let entry = UserSpaceOutputDispatcher.Entry(backend: backend, inputReportState: input)
+    let handler = UserSpaceHostReportHandler(
+      identifier: LogicalControllerID(vendorID: 1406, productID: 8201),
+      input: input,
+      sender: entry.sender,
+      isOpen: { true },
+      onOutput: { _, _ in Issue.record("Nintendo initialization must not drive a physical pad") },
+      onRumbleStatus: { _ in }
+    )
+    let first = entry.sender.submit { [input.update { $0.buttons = 0 }] }
+    await gate.waitForEntry()
+    let held = entry.sender.submit { [input.update { $0.buttons = 1 }] }
+    let request: [UInt8] = [0x01, 0] + [UInt8](repeating: 0, count: 8) + [0x02]
+    let heldReply = try handler.setReport(type: .output, reportID: 1, bytes: request)
+    let released = entry.sender.submit { [input.update { $0.buttons = 0 }] }
+    let releasedReply = try handler.setReport(type: .output, reportID: 1, bytes: request)
+    await gate.open()
+    try await first.value()
+    try await held.value()
+    try await heldReply.value()
+    try await released.value()
+    try await releasedReply.value()
+    let reports = backend.snapshot().reports
+    try #require(reports.count == 5)
+    #expect(reports.map { $0[0] } == [0x30, 0x30, 0x21, 0x30, 0x21])
+    #expect(reports[2][3] & 0x04 != 0)
+    #expect(reports[4][3] & 0x04 == 0)
+    #expect(reports.map { $0[1] } == [0, 1, 2, 3, 4])
+    #expect(backend.snapshot().maxActive == 1)
+    await entry.close()
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func closingNintendoEntryRejectsItsQueuedReply() async throws {
+    let gate = ReportSendGate()
+    let backend = OrderedReportBackend(gate: gate)
+    let input = UserSpaceInputReportState(format: SwitchProHIDReportFormat())
+    let entry = UserSpaceOutputDispatcher.Entry(backend: backend, inputReportState: input)
+    let handler = UserSpaceHostReportHandler(
+      identifier: LogicalControllerID(vendorID: 1406, productID: 8201),
+      input: input,
+      sender: entry.sender,
+      isOpen: { true },
+      onOutput: nil,
+      onRumbleStatus: { _ in }
+    )
+    let first = entry.sender.submit { [[0x30]] }
+    await gate.waitForEntry()
+    let reply = try handler.setReport(type: .output, reportID: 0x80, bytes: [0x80, 1])
+    let close = entry.beginClose()
+    #expect(backend.snapshot().closes == 1)
+    await gate.open()
+    _ = try? await first.value()
+    await close.value
+    await #expect(throws: (any Error).self) { try await reply.value() }
+    #expect(!backend.snapshot().reports.contains { $0.first == 0x81 })
+    #expect(throws: VirtualHostReportError.closed) {
+      try handler.setReport(type: .output, reportID: 0x80, bytes: [0x80, 1])
+    }
+  }
+
+  @Test(.timeLimit(.minutes(1)))
   func hostSetReportReturnsAfterOrderedEnqueue() async throws {
     let gate = ReportSendGate()
     let backend = OrderedReportBackend(gate: gate)

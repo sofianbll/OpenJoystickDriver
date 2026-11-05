@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The pr
 
 ## [Unreleased]
 
+### Added
+
+- An opt-in `SwitchPro` virtual output (`057E:2009`), selected with `ojd virtual set switch-pro CONTROLLER`, the app's existing profile picker, or `ojd virtual feed --as switch-pro`. It encodes Nintendo core input and initialization replies using MIT-licensed libvirtualhid protocol methods. Automatic selection is unchanged. GameController, Steam/SDL and PowerA compatibility are not verified, and physical motion, rumble and LED forwarding are not provided by this output.
+
 ## [0.6.0-alpha.1] - 2026-10-23
 
 ### Added

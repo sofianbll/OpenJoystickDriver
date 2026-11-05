@@ -64,19 +64,19 @@ struct VirtualHIDProfileOverrideStoreTests {
     }
   }
 
-  @Test
-  func anOverrideRoundTripsThroughAPersonaFile() throws {
+  @Test(arguments: VirtualHIDProfileID.allCases)
+  func anOverrideRoundTripsThroughAPersonaFile(profile: VirtualHIDProfileID) throws {
     try withDirectory { directory in
-      try Store(directory: directory).set(.generic, vendorID: 0x045E, productID: 0x02EA)
+      try Store(directory: directory).set(profile, vendorID: 0x045E, productID: 0x02EA)
 
-      #expect(Store(directory: directory).override(vendorID: 0x045E, productID: 0x02EA) == .generic)
+      #expect(Store(directory: directory).override(vendorID: 0x045E, productID: 0x02EA) == profile)
       let url = directory.appendingPathComponent("045e-02ea.json")
       let object = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
       let document = try #require(object as? [String: Any])
       #expect(document["$schema"] == nil)
       #expect(document["apiVersion"] as? String == OpenJoystickDriverAPI.version)
       #expect(document["kind"] as? String == Store.kind)
-      #expect(document["persona"] as? String == "Generic")
+      #expect(document["persona"] as? String == profile.rawValue)
       let match = try #require(document["match"] as? [String: Any])
       #expect(match["vendorID"] as? Int == 0x045E)
       #expect(match["productID"] as? Int == 0x02EA)

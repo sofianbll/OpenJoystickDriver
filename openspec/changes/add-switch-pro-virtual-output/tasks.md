@@ -1,0 +1,53 @@
+# Tasks
+
+Each task is local implementation work after approval. Source-derived fixtures and fake backends establish protocol behavior, not macOS or PowerA compatibility.
+
+Verification decision (2026-11-06): the repository requires Swift 6.4.0 exactly, while the sole installed Xcode at `/Applications/Xcode.app` provides Apple Swift 6.4.2. `Scripts/Platform/environment.sh` rejects it before compilation. Sofian approved preparing the patch and tests without installing another Xcode or changing the pin, with compilation and Swift test verification deferred to compatible CI after human review and separate publication approval. Tests not executed here remain not verified and their tasks remain open. No compiler check is bypassed.
+
+CI authorization (2026-11-06): Sofian approved a public `sofianbll/OpenJoystickDriver` fork, committing and pushing this patch, and GitHub Actions validation on a separate CI branch that may export generated snapshots and reports. The compiler pin stays unchanged. Each run is limited to 45 minutes and each problem to two repair cycles. No upstream pull request, tag, release, signing credentials, app installation or virtual-device activation is authorized. Stop if the required Swift version or access is missing.
+
+## 1. Licensed reference and independent fixtures
+
+- [x] 1.1 Record the pinned libvirtualhid paths, symbols, hashes, MIT assignment and retained notices in `docs/development/compatibility-sources.md` and the applicable license bundle. Verify every adapted file traces to `4847ea017f02115a02f57bd9372c0d2d8fe7c06f` and no broker code or dependency is included.
+- [x] 1.2 Add source-derived Switch Pro descriptor, core input, handshake and SPI/ACK fixtures with provenance under the existing packet fixtures. Verify expected bytes are fixed independently of the Swift encoder and the fixture documentation identifies them as synthetic rather than hardware captures.
+
+## 2. Nintendo reports and host replies
+
+- [ ] 2.1 Implement the Nintendo descriptor and core input packer under Kit `Output/HID/Nintendo/`. Verify `SwitchProReportTests` covers all face-button positions, shoulders, triggers, eight D-pad directions, stick centers/extremes, Home/Capture and neutral/release against the independent fixtures.
+- [ ] 2.2 Implement bounded USB initialization, device-information, report-mode and calibration handling with per-device counters and an explicit supported-command list. Verify `SwitchProHostReportTests` covers expected replies, current held controls, unsupported modes/commands, truncation, report-ID mismatch, SPI bounds and oversized requests. Document accepted no-op controls and excluded physical features with the source record.
+- [ ] 2.3 Extend the existing host-report boundary and ordered sender for protocol replies without a physical-output command. Verify fake-backend dispatcher tests cover reply ordering, two devices, close during a queued reply, no post-close writes and unchanged Xbox rumble/Generic rejection behavior.
+
+## 3. Opt-in profile and all consumers
+
+- [ ] 3.1 Add `SwitchPro` / `switch-pro`, the authored and bundled virtual-device record and necessary Nintendo identity presentation. Keep automatic selection unchanged. Verify profile resolution, strict decoding, identity, representable controls, selector and persistence tests; keep all existing profile byte fixtures unchanged.
+- [ ] 3.2 Extend existing virtual-device, endpoint and CLI-output schemas and their constrained consumers, including BridgeCore if required by its profile vocabulary. Verify schema/Swift agreement, unknown-name rejection, endpoint profile listings, CLI selection and snapshot tests, including schema-rejection fixtures when a document fails Swift validation.
+- [ ] 3.3 Exercise the existing `virtual feed` with `switch-pro` through a fake publisher and make the existing app picker expose the profile. Verify service feed, CLI and presentation-model tests. Add and review any required locale keys under `LOCALIZATION.md`; do not create another picker or inline UI strings.
+- [ ] 3.4 Verify SDL/W3C export against the Nintendo descriptor and packed fields, reporting unmapped fields honestly rather than inventing bindings. Update mapping tests and the existing equivalence snapshot with an explicit profile addition only. Add user documentation to `wiki/Playing-Games.md` and `wiki/Command-Reference.md`, update the README profile list and changelog, and label consumer compatibility not verified.
+
+## 4. Integration and contribution evidence
+
+- [ ] 4.1 Run the focused Nintendo, host-report, profile, mapping, CLI, endpoint, feed and presentation-model tests with no signing assets or live device activation. Verify the unchanged personas and delivery regressions pass; record exact commands, versions, failures and skipped checks.
+- [ ] 4.2 Run `just check` once on the complete implementation and rerun only failed checks after bounded repairs. Verify `git diff --check`, schema/profile validation, parser compatibility and the full local check report, without bypassing hooks or installing host tools implicitly.
+- [x] 4.3 Add a hardware-evidence checklist in `docs/testing/` for a maintainer-signed build: synthetic Nintendo feed, HID enumeration, GameController enumeration plus live controls, separate Steam/SDL tests, Home/Capture and teardown. Verify the checklist makes no PowerA success claim and identifies the remaining physical-admission work.
+
+## Local verification record (2026-11-06)
+
+- Written: Nintendo input/replies, per-entry timing and bounded native input, the opt-in profile and records, CLI/feed/endpoint/schema integration, Nintendo presentation, focused tests and user/source documentation. Swift-dependent tasks above remain open because they are not verified by execution.
+- Provenance inspection passed: five freshly fetched pinned source/license SHA-256 hashes match the source record; the bundled MIT notice is byte-identical; the Swift descriptor and fixture equal the pinned 203-byte descriptor; all nine literal golden packets have 64 bytes. Calibration fixtures explicitly encode center 2048, positive extent 2047 and negative extent 2048.
+- `./Scripts/ojd check schemas`: blocked while preparing `OJDRepositoryTool` by the exact Swift pin (installed 6.4.2, required 6.4.0); no Swift compilation occurred. Its repository-local schema-validator environment was prepared by the standard command.
+- Direct Draft 2020-12 checks passed for all 15 schema documents, both equal Nintendo persona records, the endpoint `FeedRequest` and rejected alternate persona spellings. This is schema-only evidence, not Swift/schema agreement.
+- `python3 Scripts/Quality/check_localization_keys.py`: passed, with its reported dynamic-key scan limits. No locale values or keys were added or changed; Nintendo control names reuse the existing localized semantic and face-button keys.
+- `python3 Scripts/Quality/check_neutral_core_imports.py`: passed.
+- Xcode's `swift-format lint --strict`: passed for all 32 changed/added Swift files. Pinned Biome `ci`: passed for all five changed/added JSON files. These do not type-check or execute Swift.
+- `git diff --check` and strict OpenSpec validation of `add-switch-pro-virtual-output`: passed. OpenSpec progress is 3/12 complete; the nine remaining tasks retain their execution/snapshot gates.
+- `/usr/bin/env just check`: failed with exit 127 because `just` is not installed/on PATH. No host tool was installed, and no replacement full-suite success is claimed.
+- Swift build, focused Swift tests, parser compatibility, SwiftLint, app launch, visual UI inspection and signed/hardware checks: not run. Xcode, compiler pins, permissions, entitlements and physical admission are unchanged.
+- `Tests/EquivalenceSnapshots/sdl-mappings.txt` and `output-mapping.txt` still require Nintendo sections generated through the supported Swift toolchain. The snapshot tests are expected to report those missing additions until `./Scripts/ojd snapshots write` runs there; inspect the diff and preserve all existing persona sections before accepting it. Do not publish this patch as fully checked.
+
+## Workflow follow-up
+
+- Show the exact diff and proposed external text to Sofian before creating an issue, comment, fork or pull request.
+- Ask the maintainer to accept the fourth persona and reconcile the in-flight `platform-neutral-redesign` persona contract before upstream integration.
+- Request a maintainer-signed tester build when appropriate. Installation, permissions, real virtual-device activation and physical controller tests require separate consent.
+- Investigate the PowerA `0000:0000` admission path separately with precise matching and regression tests, never a global vendor-zero override.
+- Archive only after the implementation and its offline checks are complete, retaining unverified consumer/hardware status explicitly.

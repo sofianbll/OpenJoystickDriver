@@ -81,7 +81,8 @@ extension VirtualDevice {
       guard let labels = (value as? String).flatMap(VirtualIdentityGlyphFamily.init) else {
         throw ControllerRecordProblem(
           code: .invalidControllerRecord,
-          "labels must be Xbox or Generic"
+          "labels must be one of "
+            + VirtualIdentityGlyphFamily.allCases.map(\.rawValue).joined(separator: ", ")
         )
       }
       return labels

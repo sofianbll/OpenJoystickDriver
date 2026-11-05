@@ -20,6 +20,38 @@ The evidence classes used for this decision are official documentation, upstream
 [4]: https://github.com/libsdl-org/SDL/blob/fa2c02bb6e21974a89ea9824bc53c9932abe5f9c/LICENSE.txt
 [5]: https://github.com/torvalds/linux/blob/44696aa3a489d2baf58efa61b37833f100072bee/drivers/input/joystick/xpad.c
 
+## Pinned Switch Pro Output Evidence
+
+The Switch Pro output adapts the cross-platform library and shared protocol code from libvirtualhid [`4847ea017f02115a02f57bd9372c0d2d8fe7c06f`](https://github.com/LizardByte/libvirtualhid/tree/4847ea017f02115a02f57bd9372c0d2d8fe7c06f) (`v2026.1104.2126.25`). The files and their SHA-256 hashes are:
+
+- `src/core/profiles.cpp`: `e6c388365c1b9ff88a7653dcfb1d592b6a6f511f60e621b5bed386d8bf2bc277`. `make_switch_pro_report_descriptor` supplies the 203 descriptor bytes; the Switch Pro profile supplies USB `057E:2009`, version `0210` and the 64-byte report size.
+- `src/core/report.cpp`: `74e8656b70f51ea77614454de44dfea8155a7e68e93c5850c04bb86bbb629cb9`. `pack_switch_pro_input_report`, `normalize_switch_stick_axis`, `write_switch_stick`, `write_switch_imu_sample` and `switch_battery_and_connection` supply Nintendo bit positions, 12-bit stick packing and fixed rest fields.
+- `src/shared/switch_pro_protocol.hpp`: `0dce68f2e97f11b1edb44f8452b492cfce7f04edb11a4a615f5318d28ec99d97`. `make_switch_pro_reply`, `set_device_info_reply`, `set_spi_reply`, `copy_spi_data` and the factory calibration arrays supply USB initialization, ACK and SPI framing. `set_neutral_controller_state` supplies framing context, not runtime control state.
+- `LICENSES/license-map.md`: `bf42c52204e3f31d10edd3ec8a5a761ddc2c3595e69c72b3ae63f9b5d4a965d2`. The cross-platform library and shared headers are MIT. The macOS broker directory and its bundles are LB-SAL and are excluded.
+- `LICENSES/MIT.md`: `4476801c7646ac207248c10a3fdd157af47ef9a26cd5ec95c91919a625c07f2f`. Copyright (c) 2026 LizardByte. The exact permission notice is bundled at `Sources/OpenJoystickDriverKit/Resources/Licenses/libvirtualhid-MIT.txt` through Kit's processed resources. The adapted Swift files and fixtures retain attribution. No libvirtualhid dependency or broker code is included.
+
+### Encoding and fixture boundaries
+
+`Tests/ProtocolPacketFixtures/ProtocolPacketFixtures+SwitchProOutput.swift` holds independent literal expected packets derived from these pinned methods, not from OJD's Swift encoder. They are synthetic, not hardware captures. The descriptor bytes match the pinned descriptor. Button expectations use Nintendo physical positions B/A/Y/X at South/East/West/North. OJD's Y-down state is inverted for Nintendo's Y-up sticks.
+
+Stick centers are 2048, with positive extent 2047 and negative extent 2048 to cover the emitted `0...4095` range exactly. The emulated SPI calibration and its fixed fixture use those extents; they do not claim factory data from a physical controller. Battery/connection is the fixed USB value `0x81`. Three fixed IMU rest samples report acceleration Z as 4096 and all other fields as zero. Neither battery nor motion state comes from physical input.
+
+The descriptor's generic button/axis/hat fields do not align with Nintendo's packed `0x30` packet offsets. SDL/W3C export therefore marks every Nintendo control unmapped instead of treating timer, battery or packed-stick bytes as ordinary HID controls. A consumer's Nintendo protocol reader is separate from this generic mapping export. `worksWithDefaultSDLHints` selects the ordinary SDL path; it is not evidence that SDL read this virtual device successfully.
+
+### Supported host dialogue
+
+GetReport exposes primary input `0x30`. Initialization replies `0x21` and `0x81` use the ordered interrupt-input sender, not GetReport.
+
+- Output `0x80`, commands `0x01`, `0x02` and `0x03`: a matching 64-byte `0x81` reply; `0x01` includes the emulated controller type and fixed address. Command `0x04` is accepted without a reply. Other commands are unsupported.
+- Output `0x01`, subcommand `0x02`: device information with ACK `0x82`; subcommand `0x03`: ACK `0x80` for input mode `0x30` only. Other report modes are unsupported.
+- Output `0x01`, subcommand `0x10`: ACK `0x90` and the echoed little-endian address/length. Reads must fit wholly within the fixed IMU region `0x6020...0x6037` or stick region `0x603D...0x604E`. They may select subranges. Response capacity is 44 data bytes, and out-of-region or cross-region reads fail rather than synthesize padding.
+- Output `0x01`, subcommands `0x30` (player LEDs), `0x38` (Home LED), `0x40` (IMU enable) and `0x48` (vibration enable): explicit ACK `0x80` no-ops, with bounded minimum payloads and Boolean enable validation. They forward no lighting, motion or vibration. The Home LED no-op requires at least its three control bytes.
+- Output `0x10`: a bounded timer plus eight rumble bytes is an accepted no-op, without a reply or a physical-output command. Output `0x82` and other report IDs are unsupported despite their descriptor declarations.
+
+Numbered buffers include their report ID. Nintendo buffers are bounded to 64 bytes before native copying and ID removal. Truncation, an ID mismatch and invalid enable values fail as malformed; oversized buffers and SPI response lengths fail as too large; unknown commands or addresses fail as unsupported. There is no catch-all ACK or retry. Counters belong to each dispatcher entry and replies share its ordered sender, using its current controls rather than the reference's neutral helper or global counter. Identical input remains deduplicated despite the packet timer.
+
+These source facts and fixtures do not establish virtual-device creation, GameController enumeration, live input, Steam/SDL acceptance, Home/Capture delivery or physical PowerA admission. The [signed-build checklist](../testing/switch-pro-virtual-output.md) separates these observations.
+
 ## Admission Policy
 
 - Select Flydigi, GameSir, XID, XUSB, GIP, or another specialized parser only for an exact cataloged VID/PID, transport, and protocol variant.

@@ -88,7 +88,7 @@ The endpoint answers with the same `ADDED`, `MODIFIED`, and `DELETED` watch line
 
 ### FeedRequest
 
-The program sends it after the `Welcome` to publish a virtual gamepad. It needs the `Control` scope. `as` is a persona id: `Generic` or `SDLCompatible`. Closing the connection removes the virtual gamepad.
+The program sends it after the `Welcome` to publish a virtual gamepad. It needs the `Control` scope. `as` is a persona id: `Generic`, `SDLCompatible`, `GameControllerCompatible` or `SwitchPro`. Closing the connection removes the virtual gamepad. Consumer compatibility for `SwitchPro` is not verified.
 
 ```json
 {"apiVersion":"openjoystickdriver/v1alpha1","kind":"FeedRequest","as":"Generic"}
@@ -204,7 +204,7 @@ The `apiVersion` of the endpoint is `openjoystickdriver/v1alpha1`. It is the sam
 - The endpoint does not translate between versions. A line with another `apiVersion` gets `E1009` with the supported list.
 - An alpha version can change without a compatibility promise. The release notes list each change.
 - A change that older programs cannot read gets a new `apiVersion`. Error codes and persona ids do not change meaning.
-- Persona ids in `as` are `Generic` and `SDLCompatible`. They name no operating system.
+- Persona ids in `as` are `Generic`, `SDLCompatible`, `GameControllerCompatible` and `SwitchPro`.
 
 ## Reference client
 

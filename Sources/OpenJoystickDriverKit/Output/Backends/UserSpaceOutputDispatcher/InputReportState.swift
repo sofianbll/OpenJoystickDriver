@@ -7,6 +7,7 @@ final class UserSpaceInputReportState: Sendable {
     var state = VirtualGamepadState()
     var report: [UInt8]
     var remapped = false
+    var packetTimer: UInt8 = 0
     /// The input report input delivery last published; nil once another path published.
     var deliveredReport: [UInt8]?
     /// The auxiliary input reports last handed to delivery, index-aligned with the format's.
@@ -19,6 +20,11 @@ final class UserSpaceInputReportState: Sendable {
   private let current: Locked<Current>
 
   var isRemapped: Bool { current.withLock { $0.remapped } }
+
+  /// Nintendo's several host-report IDs share one bounded USB report buffer.
+  var maximumConsumerReportSize: Int? {
+    format is SwitchProHIDReportFormat ? SwitchProHIDReportFormat.maximumReportSize : nil
+  }
 
   init(format: any VirtualGamepadReportFormat) {
     self.format = format
@@ -37,8 +43,16 @@ final class UserSpaceInputReportState: Sendable {
   func update(remapped: Bool = false, _ body: (inout VirtualGamepadState) -> Void) -> [UInt8] {
     current.withLock { current in
       current.remapped = remapped
+      // Compare deterministic bytes so packet timing cannot defeat deduplication.
+      let previous = format.buildInputReport(from: current.state)
       body(&current.state)
-      current.report = format.buildInputReport(from: current.state)
+      if format.buildInputReport(from: current.state) != previous {
+        current.packetTimer &+= 1
+        current.report = format.buildInputReport(
+          from: current.state,
+          packetTimer: current.packetTimer
+        )
+      }
       return current.report
     }
   }
@@ -72,7 +86,11 @@ final class UserSpaceInputReportState: Sendable {
       current.state = VirtualGamepadState()
       current.remapped = false
       current.deliveredReport = nil
-      current.report = format.buildInputReport(from: current.state)
+      current.packetTimer &+= 1
+      current.report = format.buildInputReport(
+        from: current.state,
+        packetTimer: current.packetTimer
+      )
       return current.report
     }
   }
@@ -81,12 +99,33 @@ final class UserSpaceInputReportState: Sendable {
 
   var isClosed: Bool { current.withLock { $0.closed } }
 
-  /// The command a host output report requests of this device's format.
-  func consumerOutput(
-    _ request: VirtualHostReportRequest
-  ) throws(VirtualHostReportError) -> ControllerOutputCommand {
-    guard request.type == .output else { throw .unsupported }
-    return try ConsumerOutputCodec.decode(request, in: format)
+  /// Validates synchronously before a native callback acknowledges enqueueing.
+  func validateConsumerRequest(_ request: VirtualHostReportRequest) throws {
+    try current.withLock { current in
+      guard !current.closed else { throw VirtualHostReportError.closed }
+      _ = try ConsumerOutputCodec.response(
+        request,
+        in: format,
+        state: current.state,
+        packetTimer: current.packetTimer
+      )
+    }
+  }
+
+  /// Builds replies inside the ordered sender, after preceding input updates.
+  func consumerResponse(_ request: VirtualHostReportRequest) throws -> ConsumerOutputResponse {
+    try current.withLock { current in
+      guard !current.closed else { throw VirtualHostReportError.closed }
+      let timer = current.packetTimer &+ 1
+      let response = try ConsumerOutputCodec.response(
+        request,
+        in: format,
+        state: current.state,
+        packetTimer: timer
+      )
+      current.packetTimer = timer
+      return response
+    }
   }
 
   /// The current input report a host requests, bounded to `maxSize` and including its ID when the

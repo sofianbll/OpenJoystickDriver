@@ -59,6 +59,7 @@ final class IOHIDVirtualDeviceBackend: VirtualDeviceBackend, @unchecked Sendable
     IOHIDUserDeviceRegisterSetReportBlock(device) { type, reportID, report, reportLength in
       do {
         guard reportLength >= 0 else { throw VirtualHostReportError.malformed }
+        try hostReports.validateSetReportSize(Int(reportLength))
         let bytes = Array(UnsafeBufferPointer(start: report, count: Int(reportLength)))
         try hostReports.acknowledgeSetReport(
           type: try Self.reportType(type),

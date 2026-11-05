@@ -7,34 +7,38 @@ import Testing
 
 @Suite(.serialized)
 struct VirtualCommandTests {
-  @Test
-  func setSendsTheProfileForTheSelectedControllerAndPrintsTheResult() async throws {
+  @Test(arguments: VirtualHIDProfileID.allCases)
+  func setSendsTheProfileForTheSelectedControllerAndPrintsTheResult(
+    profile: VirtualHIDProfileID
+  ) async throws {
     let service = try FakeService(devices: [
       ApplicationServiceDeviceDescription.fixture(id: "pad-1")
     ]) { method, _ in
       method == .setVirtualHIDProfileOverride
         ? encoded(
           VirtualHIDProfileOverrideResult(
-            requested: .generic,
-            live: .generic,
+            requested: profile,
+            live: profile,
             source: .override,
             failure: nil
           )
         ) : nil
     }
-    let result = await service.run(["virtual", "set", "generic", token("pad-1"), "--json"])
+    let result = await service.run([
+      "virtual", "set", profile.commandLineName, token("pad-1"), "--json",
+    ])
 
     #expect(result.code == 0, "\(result.standardError)")
     let json = try result.json()
     #expect(json["controller"] as? String == token("pad-1"))
-    #expect(json["live"] as? String == "Generic")
+    #expect(json["live"] as? String == profile.rawValue)
     #expect(json["source"] as? String == "override")
     let arguments = try #require(service.arguments(of: .setVirtualHIDProfileOverride).first)
     let sent = try JSONDecoder().decode(
       LocalServiceRPCVirtualHIDProfileOverrideArguments.self,
       from: arguments
     )
-    #expect(sent.profile == "Generic")
+    #expect(sent.profile == profile.rawValue)
     #expect(sent.controller == .session(.fixture("pad-1")))
   }
 

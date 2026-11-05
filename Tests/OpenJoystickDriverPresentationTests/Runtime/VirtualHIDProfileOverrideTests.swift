@@ -45,17 +45,19 @@ struct VirtualHIDProfileOverrideTests {
     )
   }
 
-  @Test
-  func settingAProfileSendsTheControllerSelectorAndRefreshesInventoryOnce() async {
+  @Test(arguments: VirtualHIDProfileID.allCases)
+  func settingAProfileSendsTheControllerSelectorAndRefreshesInventoryOnce(
+    profile: VirtualHIDProfileID
+  ) async {
     let gateway = GatewayStub()
     let viewModel = RuntimeViewModel(gateway: gateway)
     let device = Self.device()
 
-    await viewModel.setVirtualHIDProfileOverride(.generic, for: device)
+    await viewModel.setVirtualHIDProfileOverride(profile, for: device)
 
     let requests = await gateway.overrideRequests
     #expect(requests.count == 1)
-    #expect(requests.first?.profile == .generic)
+    #expect(requests.first?.profile == profile)
     #expect(
       requests.first?.selector
         == ControllerReference.session(.fixture("device-override"))

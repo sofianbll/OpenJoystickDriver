@@ -4,6 +4,7 @@ import Foundation
 public enum VirtualIdentityGlyphFamily: String, Codable, CaseIterable, Sendable {
   case xbox = "Xbox"
   case generic = "Generic"
+  case nintendo = "Nintendo"
 }
 
 /// SF Symbol and glyph family owned by the published USB product, not the physical pad.
@@ -24,6 +25,7 @@ public struct VirtualIdentityPresentation: Equatable, Hashable, Sendable {
 
   public static let xbox = Self(glyphFamily: .xbox, controllerSymbolName: "xbox.logo")
   public static let generic = Self(glyphFamily: .generic, controllerSymbolName: "gamecontroller")
+  public static let nintendo = Self(glyphFamily: .nintendo, controllerSymbolName: "gamecontroller")
 
   public static let playstation = Self(
     glyphFamily: .generic,
@@ -34,6 +36,7 @@ public struct VirtualIdentityPresentation: Equatable, Hashable, Sendable {
     switch profile.glyphFamily {
     case .xbox: .xbox
     case .generic: .generic
+    case .nintendo: .nintendo
     }
   }
 }

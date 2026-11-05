@@ -11,7 +11,7 @@ This page explains how games and apps see your controller through OpenJoystickDr
 
 ## How Games See Your Controller
 
-Games do not read your physical controller. OJD reads it and publishes one virtual controller for each physical controller. Games read the virtual controller. The virtual controller uses one of three profiles.
+Games do not read your physical controller. OJD reads it and publishes one virtual controller for each physical controller. Games read the virtual controller. The virtual controller uses one of four profiles.
 
 ### Virtual Controller Profiles
 
@@ -19,6 +19,7 @@ Games do not read your physical controller. OJD reads it and publishes one virtu
 | --- | --- | --- | --- |
 | `SDLCompatible` | Xbox Adaptive Controller, Microsoft, USB | `045E:0B0C` | Accepts rumble output |
 | `GameControllerCompatible` | Xbox Wireless Controller, Microsoft, Bluetooth | `045E:0B13` | Accepts rumble output |
+| `SwitchPro` | Pro Controller, Nintendo, USB | `057E:2009` | No physical feedback forwarding |
 | `Generic` | OpenJoystickDriver Generic HID Gamepad, USB | `1209:4A4F` | Input only |
 
 The `SDLCompatible` profile is an approximation of an Xbox controller. It is not a byte-exact copy of a real controller. SDL games, Steam, and emulators read it as an Xbox pad named Xbox Adaptive Controller. Apple's GameController framework, which Safari and some Mac games use, does not see it. The `GameControllerCompatible` profile sends the reports of an Xbox Series controller over Bluetooth, which Apple's GameController framework reads. OJD never picks it by itself; choose it with `ojd virtual set game-controller-compatible CONTROLLER`. SDL reads its reports as USB Xbox One packets, so SDL games read no input from it. Steam lists it as "Xbox Series X Controller" with no input and no rumble; use `SDLCompatible` for Steam. Start another SDL game with `ojd virtual launch --sdl-gamecontroller-backend PROGRAM`, which makes SDL read it through the GameController framework. With a Razer Wolverine Tournament Edition, a GameController game read every control except Guide and Share. With input from `ojd virtual feed`, Guide reaches the game in front, and Share reaches no game. The `Generic` profile has 16 buttons and no hat. The D-pad uses four of the 16 buttons.
@@ -31,7 +32,11 @@ OJD picks a profile for each controller model in this order:
 2. The `SDLCompatible` profile, if it fits the main controls of the controller.
 3. The `Generic` profile.
 
-Automatic selection never picks `GameControllerCompatible`.
+Automatic selection never picks `GameControllerCompatible` or `SwitchPro`.
+
+The `SwitchPro` output encodes Nintendo buttons, sticks, D-pad, digital triggers, Home and Capture, and answers host initialization requests. Choose it with `ojd virtual set switch-pro CONTROLLER` or in the existing virtual profile picker. Its compatibility with GameController, Steam, SDL and browsers is not verified. Home and Capture delivery in games is not verified. Motion, battery telemetry and physical rumble or LED forwarding are not provided by this output. Choosing this output does not add support for a physical controller that OJD cannot read.
+
+`SwitchPro` uses Nintendo protocol packets rather than generic HID control fields. Its SDL/W3C mapping export lists those controls as unmapped. An SDL mapping cannot make a generic HID reader decode these packets; a consumer needs a Nintendo protocol reader.
 
 The choice does not depend on the game, the macOS version, or the vendor. Both profiles carry every main control, so OJD chooses the Xbox profile for every controller unless you set an override. PCSX2 2.8.2 (SDL 3.4.12) and DuckStation (SDL 3.4.16) map every control of the Xbox profile as an Xbox pad: A, B, X, Y, LB, RB, View, Menu, both sticks, both triggers, the D-pad, Xbox, and both rumble motors. With the `Generic` profile, they report "No generic bindings were generated for device 'SDL-0'". The maintainer tested this on macOS 27 with the Xbox profile on `045E:02FD`. SDL reads `045E:0B0C` with the same code; these apps are not yet tested on it.
 

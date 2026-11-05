@@ -146,7 +146,8 @@ extension VirtualHIDProfileID {
         .init(
           control: control,
           fields: changed.map { "\($0.element.usagePage):\($0.element.usage)" },
-          binding: binding
+          // Nintendo packs protocol state behind HID usages that do not identify its controls.
+          binding: self == .switchPro ? nil : binding
         )
       )
     }

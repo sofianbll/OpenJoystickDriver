@@ -65,6 +65,15 @@ struct InputTestPresentationTests {
     #expect(generic.leftShoulder.symbol == nil)
     #expect(generic.leftShoulder.fallbackText == "LB / L1")
     #expect(generic.guide.symbol == "house.fill")
+
+    let nintendo = InputTestControllerSymbolSet.resolve(for: .nintendo)
+    #expect(nintendo.southFace.fallbackText == "B")
+    #expect(nintendo.eastFace.fallbackText == "A")
+    #expect(nintendo.westFace.fallbackText == "Y")
+    #expect(nintendo.northFace.fallbackText == "X")
+    #expect(nintendo.leftTrigger.fallbackText == "ZL")
+    #expect(nintendo.rightTrigger.fallbackText == "ZR")
+    #expect(nintendo.guide.symbol == "house.fill")
   }
 
   @Test

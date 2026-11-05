@@ -36,11 +36,13 @@ package final class UserSpaceHostReportHandler: Sendable {
   ) throws -> UserSpaceReportSender.SubmissionReceipt {
     try lock.withLock {
       guard isOpen(), !input.isClosed else { throw VirtualHostReportError.closed }
+      try validateSetReportSize(bytes.count)
       let request = try VirtualHostReportRequest(type: type, reportID: reportID, bytes: bytes)
-      let command = try input.consumerOutput(request)
+      try input.validateConsumerRequest(request)
       return sender.submit { [self] in
         guard isOpen() else { throw VirtualHostReportError.closed }
-        if let rumble = Self.rumbleIntensities(command) {
+        let response = try input.consumerResponse(request)
+        if let command = response.command, let rumble = Self.rumbleIntensities(command) {
           let status =
             "app report id=\(reportID) L=\(rumble.lowFrequency.byte) "
             + "R=\(rumble.highFrequency.byte) LT=\(rumble.leftTrigger.byte) "
@@ -48,9 +50,17 @@ package final class UserSpaceHostReportHandler: Sendable {
           onRumbleStatus(status)
           print("[UserSpaceOutputDispatcher] App rumble report: \(identifier) \(status)")
         }
-        onOutput?(identifier, command)
-        return []
+        if let command = response.command { onOutput?(identifier, command) }
+        return response.reports
       }
+    }
+  }
+
+  /// Bounds Nintendo buffers before a native callback copies host memory or strips the report ID.
+  package func validateSetReportSize(_ byteCount: Int) throws {
+    guard byteCount >= 0 else { throw VirtualHostReportError.malformed }
+    if let maximum = input.maximumConsumerReportSize, byteCount > maximum {
+      throw VirtualHostReportError.tooLarge
     }
   }
 

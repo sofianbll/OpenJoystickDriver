@@ -5,6 +5,7 @@ enum VirtualDeviceLayout: String, CaseIterable, Sendable {
   case ojdGenericGamepad = "OJDGenericGamepad"
   case xboxOneGIP = "XboxOneGIP"
   case xboxSeriesBluetooth = "XboxSeriesBluetooth"
+  case nintendoSwitchPro = "NintendoSwitchPro"
 }
 
 /// One `VirtualDevice` document (`virtual-device.schema.json`): either the definition of a
@@ -95,6 +96,7 @@ extension VirtualHIDProfileID {
     case .generic: "virtual-device.generic"
     case .sdlCompatible: "virtual-device.sdl-compatible"
     case .gameControllerCompatible: "virtual-device.game-controller-compatible"
+    case .switchPro: "virtual-device.switch-pro"
     }
   }
 }

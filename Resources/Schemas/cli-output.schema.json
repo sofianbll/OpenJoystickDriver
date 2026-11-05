@@ -967,7 +967,12 @@
               "enum": ["Published", "NotPublished", "Failed"]
             },
             "target": {
-              "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+              "enum": [
+                "SDLCompatible",
+                "Generic",
+                "GameControllerCompatible",
+                "SwitchPro"
+              ]
             }
           }
         },
@@ -999,7 +1004,12 @@
           "properties": {
             "persona": {
               "description": "The persona OJD publishes. Absent for a route that publishes nothing.",
-              "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+              "enum": [
+                "SDLCompatible",
+                "Generic",
+                "GameControllerCompatible",
+                "SwitchPro"
+              ]
             },
             "reason": {
               "description": "Why the route publishes nothing. Present only with OutputDisabled.",
@@ -1045,14 +1055,24 @@
           "additionalProperties": false,
           "properties": {
             "override": {
-              "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+              "enum": [
+                "SDLCompatible",
+                "Generic",
+                "GameControllerCompatible",
+                "SwitchPro"
+              ]
             },
             "overrideScope": {
               "enum": ["Unit", "Model"],
               "description": "Whether override is the controller's own choice or its model's."
             },
             "profile": {
-              "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+              "enum": [
+                "SDLCompatible",
+                "Generic",
+                "GameControllerCompatible",
+                "SwitchPro"
+              ]
             },
             "source": {
               "type": "string"
@@ -3325,10 +3345,20 @@
           "type": "string"
         },
         "live": {
-          "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+          "enum": [
+            "SDLCompatible",
+            "Generic",
+            "GameControllerCompatible",
+            "SwitchPro"
+          ]
         },
         "requested": {
-          "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+          "enum": [
+            "SDLCompatible",
+            "Generic",
+            "GameControllerCompatible",
+            "SwitchPro"
+          ]
         },
         "source": {
           "type": "string"
@@ -3818,7 +3848,12 @@
             "additionalProperties": false,
             "properties": {
               "profile": {
-                "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+                "enum": [
+                  "SDLCompatible",
+                  "Generic",
+                  "GameControllerCompatible",
+                  "SwitchPro"
+                ]
               },
               "sdl": {
                 "$ref": "#/$defs/sharedVirtualSDL"
@@ -3903,7 +3938,12 @@
                 "type": "string"
               },
               "override": {
-                "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+                "enum": [
+                  "SDLCompatible",
+                  "Generic",
+                  "GameControllerCompatible",
+                  "SwitchPro"
+                ]
               },
               "overrideScope": {
                 "enum": ["Unit", "Model"],
@@ -3915,7 +3955,12 @@
                 "maximum": 65535
               },
               "profile": {
-                "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+                "enum": [
+                  "SDLCompatible",
+                  "Generic",
+                  "GameControllerCompatible",
+                  "SwitchPro"
+                ]
               },
               "sdl": {
                 "$ref": "#/$defs/sharedVirtualSDL",
@@ -3942,7 +3987,12 @@
         "profiles": {
           "type": "array",
           "items": {
-            "enum": ["SDLCompatible", "Generic", "GameControllerCompatible"]
+            "enum": [
+              "SDLCompatible",
+              "Generic",
+              "GameControllerCompatible",
+              "SwitchPro"
+            ]
           }
         }
       }
