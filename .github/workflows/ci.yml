@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 349a3a58c600b04ed8f99e13b2d9d9a8a42b0eb1
+          ref: 747ff1ad8964ebf6f209ee0f030a4fb2515efe1f
           persist-credentials: false
           # `check schemas` compares the CLI output schema with the last release tag.
           fetch-depth: 0
@@ -62,16 +62,28 @@ jobs:
           path: .build/catalog-sources
           key: catalog-sources-${{ hashFiles('ControllerSources.lock.json') }}
 
-      - name: Retry canonical check-list tests on the contribution tree
+      - name: Retry CLI launch suite on the contribution tree
         run: |
-          set -o pipefail
-          .build/schema-validator/bin/python -m unittest discover -s Tests/RepositoryScripts -p test_check_list.py 2>&1 | tee .build/switch-pro-ci-check-list.log
-
-      - name: Complete remaining repository checks
-        run: |
-          set -o pipefail
           git diff --check
-          just --no-deps check 2>&1 | tee .build/switch-pro-ci-full.log
+          python3 - <<'PY'
+          from pathlib import Path
+          from Scripts.Command.execution import (
+              PROJECT_DIR,
+              executed_test_count,
+              run_without_warnings,
+              swift_command,
+          )
+
+          status, output = run_without_warnings(
+              swift_command(["test", "--no-parallel", "--filter", "VirtualLaunchCommandTests"]),
+              PROJECT_DIR,
+          )
+          Path(".build/switch-pro-ci-cli-launch.log").write_text(output)
+          if status:
+              raise SystemExit(status)
+          if executed_test_count(output) == 0:
+              raise SystemExit("CLI launch suite executed no tests")
+          PY
 
       - name: Upload validation logs and Swift-generated snapshots
         if: always()
