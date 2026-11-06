@@ -209,12 +209,13 @@ struct ReportSenderTests {
     let entries = (0..<2).map {
       UserSpaceOutputDispatcher.Entry(backend: backends[$0], inputReportState: inputs[$0])
     }
+    let isOpen: @Sendable () -> Bool = { true }
     let handlers = (0..<2).map { index in
       UserSpaceHostReportHandler(
         identifier: LogicalControllerID(vendorID: 1406, productID: UInt16(8201 + index)),
         input: inputs[index],
         sender: entries[index].sender,
-        isOpen: { true },
+        isOpen: isOpen,
         onOutput: nil
       ) { _ in }
     }
@@ -275,11 +276,12 @@ struct ReportSenderTests {
     let backend = OrderedReportBackend(gate: gate)
     let input = UserSpaceInputReportState(format: SwitchProHIDReportFormat())
     let entry = UserSpaceOutputDispatcher.Entry(backend: backend, inputReportState: input)
+    let isOpen: @Sendable () -> Bool = { true }
     let handler = UserSpaceHostReportHandler(
       identifier: LogicalControllerID(vendorID: 1406, productID: 8201),
       input: input,
       sender: entry.sender,
-      isOpen: { true },
+      isOpen: isOpen,
       onOutput: nil
     ) { _ in }
     let first = entry.sender.submit { [[0x30]] }
