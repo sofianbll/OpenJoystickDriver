@@ -9,6 +9,7 @@ This checklist separates source-backed report encoding, virtual HID publication 
 - A real Switch Pro virtual HID device has not been created or tested.
 - GameController, Steam/SDL, browser and physical PowerA input are not verified.
 - The repository pins Swift 6.4.0. Local Swift compilation and tests are not verified with that toolchain.
+- [CI run 42134512814](https://github.com/sofianbll/OpenJoystickDriver/actions/runs/42134512814) passed the warning-free package build, 215 focused offline tests and 12 equivalence tests on Xcode 27.0 / Swift 6.4.0. Its snapshot guard preserved the three existing personas. The full repository check stopped on three SwiftLint trailing-closure violations in tests; this is not a complete-suite or runtime-device result.
 
 ## Offline checks
 

@@ -215,9 +215,8 @@ struct ReportSenderTests {
         input: inputs[index],
         sender: entries[index].sender,
         isOpen: { true },
-        onOutput: nil,
-        onRumbleStatus: { _ in }
-      )
+        onOutput: nil
+      ) { _ in }
     }
     let request: [UInt8] = [0x01, 0] + [UInt8](repeating: 0, count: 8) + [0x02]
     for handler in handlers {
@@ -281,9 +280,8 @@ struct ReportSenderTests {
       input: input,
       sender: entry.sender,
       isOpen: { true },
-      onOutput: nil,
-      onRumbleStatus: { _ in }
-    )
+      onOutput: nil
+    ) { _ in }
     let first = entry.sender.submit { [[0x30]] }
     await gate.waitForEntry()
     let reply = try handler.setReport(type: .output, reportID: 0x80, bytes: [0x80, 1])

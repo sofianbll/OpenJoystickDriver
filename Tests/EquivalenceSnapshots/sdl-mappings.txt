@@ -103,3 +103,32 @@ probe DpadDown fields=[9:13] -> b12
 probe DpadLeft fields=[9:14] -> b13
 mapping=030000005e0400000c0b000000000000,Xbox Adaptive Controller,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,leftstick:b8,rightstick:b9,leftshoulder:b4,rightshoulder:b5,dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,leftx:a0,lefty:a1~,rightx:a3,righty:a4~,lefttrigger:+a2,righttrigger:+a5,platform:Mac OS X,
 unmapped=
+
+## SwitchPro
+profile=SwitchPro vendor=1406 product=8201 version=528 name=Pro Controller
+guid=030000007e0500000920000010020000
+report length=64 descriptorBytes=203
+probe Back fields=[1:48] -> none
+probe Capture fields=[1:48] -> none
+probe East fields=[1:48] -> none
+probe Guide fields=[1:48] -> none
+probe LeftShoulder fields=[1:49] -> none
+probe LeftStickClick fields=[1:48] -> none
+probe North fields=[1:48] -> none
+probe RightShoulder fields=[1:48] -> none
+probe RightStickClick fields=[1:48] -> none
+probe South fields=[1:48] -> none
+probe Start fields=[1:48] -> none
+probe West fields=[1:48] -> none
+probe LeftStickX fields=[1:49+1:50] -> none
+probe LeftStickY fields=[1:50] -> none
+probe RightStickX fields=[1:53] -> none
+probe RightStickY fields=[9:18] -> none
+probe LeftTrigger fields=[1:49] -> none
+probe RightTrigger fields=[1:48] -> none
+probe DpadUp fields=[1:49] -> none
+probe DpadRight fields=[1:49] -> none
+probe DpadDown fields=[1:49] -> none
+probe DpadLeft fields=[1:49] -> none
+mapping=030000007e0500000920000010020000,Pro Controller,,platform:Mac OS X,
+unmapped=Back,Capture,DpadDown,DpadLeft,DpadRight,DpadUp,East,Guide,LeftShoulder,LeftStickClick,LeftStickX,LeftStickY,LeftTrigger,North,RightShoulder,RightStickClick,RightStickX,RightStickY,RightTrigger,South,Start,West
