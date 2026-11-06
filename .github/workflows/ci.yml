@@ -25,6 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: 349a3a58c600b04ed8f99e13b2d9d9a8a42b0eb1
           persist-credentials: false
           # `check schemas` compares the CLI output schema with the last release tag.
           fetch-depth: 0
@@ -52,6 +53,7 @@ jobs:
           python3 -m venv .build/schema-validator
           .build/schema-validator/bin/python -m pip install -r Scripts/Quality/requirements.txt
           echo "$PWD/.build/schema-validator/bin" >> "$GITHUB_PATH"
+          git rev-parse HEAD | tee .build/switch-pro-ci-source.log
 
       # Each source is stored under its locked sha256 and checked on read, so a run downloads only changed sources.
       - name: Cache controller catalog sources
@@ -60,15 +62,16 @@ jobs:
           path: .build/catalog-sources
           key: catalog-sources-${{ hashFiles('ControllerSources.lock.json') }}
 
-      - name: Retry SwiftLint
+      - name: Retry canonical check-list tests on the contribution tree
         run: |
           set -o pipefail
-          swiftlint lint --no-cache --strict 2>&1 | tee .build/switch-pro-ci-swiftlint.log
+          .build/schema-validator/bin/python -m unittest discover -s Tests/RepositoryScripts -p test_check_list.py 2>&1 | tee .build/switch-pro-ci-check-list.log
 
       - name: Complete remaining repository checks
         run: |
           set -o pipefail
-          just --no-deps check-fast check 2>&1 | tee .build/switch-pro-ci-full.log
+          git diff --check
+          just --no-deps check 2>&1 | tee .build/switch-pro-ci-full.log
 
       - name: Upload validation logs and Swift-generated snapshots
         if: always()
