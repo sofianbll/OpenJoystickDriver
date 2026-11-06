@@ -8,11 +8,12 @@ struct VirtualHostReportTests {
   @Test
   func nintendoNativeBufferLimitIsCheckedBeforeCopyingTheRequest() throws {
     let input = UserSpaceInputReportState(format: SwitchProHIDReportFormat())
+    let isOpen: @Sendable () -> Bool = { true }
     let handler = UserSpaceHostReportHandler(
       identifier: LogicalControllerID(vendorID: 1406, productID: 8201),
       input: input,
       sender: UserSpaceReportSender(),
-      isOpen: { true },
+      isOpen: isOpen,
       onOutput: nil
     ) { _ in }
     try handler.validateSetReportSize(64)
