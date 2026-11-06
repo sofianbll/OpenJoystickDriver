@@ -14,6 +14,9 @@ It reads a controller over USB, Bluetooth, or a 2.4 GHz dongle and shows it to g
 > Many controllers have no hardware test yet, and some games do not read the virtual controller.
 > Check [Supported controllers][wiki-supported] and [Playing games][wiki-games] before you rely on it.
 
+> [!NOTE]
+> For the PowerA `0000:0000` and Switch Pro work in this fork, see the [clone-and-resume guide and validation evidence](docs/testing/switch-pro-virtual-output.md#resuming-from-a-clone). Correct physical mapping and Apple-authorized virtual output remain unverified.
+
 ## Features
 
 - **696 controller records:** Xbox, PlayStation, Nintendo Switch, Steam, GameSir, NVIDIA SHIELD, Flydigi, and generic HID gamepads.

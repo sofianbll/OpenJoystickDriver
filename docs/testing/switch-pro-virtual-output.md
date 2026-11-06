@@ -51,3 +51,29 @@ Evidence date: 2026-11-06. Operator observations and direct inspection establish
 - Physical selection matches accept zero in both the decoder and JSON Schema; published virtual identities still require a nonzero vendor ID. A saved model-level SwitchPro selection for `0000:0000` supplies the regression reproducer. The operator reports that selecting SwitchPro works after rebuilding. This is selector evidence, not consumer input evidence.
 - A stored unit-level SDLCompatible selection takes precedence over the model-level SwitchPro selection. These settings are user data, not bundled defaults.
 - The operator cannot locate the desired gamepad destinations in the assignment picker. Successful remapping is not observed. Physical mapping and Apple-authorized virtual publication remain separate prerequisites for an end-to-end test.
+
+## Resuming from a clone
+
+The personal development fork is `sofianbll/OpenJoystickDriver`, with `feat/switch-pro-virtual-output` as its default branch. Clone it without a local backup or a sibling working tree:
+
+```bash
+git clone https://github.com/sofianbll/OpenJoystickDriver.git
+cd OpenJoystickDriver
+```
+
+The clone contains the PowerA admission, the zero-vendor profile-selection fix, the Switch Pro output, tests, schemas, source/license references and this evidence record. The open acceptance items are in [the change checklist](../../openspec/changes/add-switch-pro-virtual-output/tasks.md#5-zero-vendor-profile-persistence).
+
+1. Select the Xcode toolchain that provides the repository's pinned Swift 6.4.0 for supported-toolchain checks.
+2. Follow [Building from source](../development/building-from-source.md) to install the declared development dependencies with `./Scripts/ojd setup`.
+3. Open `OpenJoystickDriver.xcodeproj` and select `OpenJoystickDriverApp` for the app. Configure your own Apple Development team in Signing & Capabilities when signing personally; no personal team identifier is committed.
+4. Keep physical-input mapping tests separate from virtual HID publication. A local app build without Apple's virtual HID entitlement does not establish a working virtual controller. Follow [Signing](../development/signing.md) for authorized publication prerequisites.
+
+Apple certificates, private keys, provisioning profiles and user controller settings are external personal assets, not source files. They are not exported into this repository. A clone restores the development project, not Apple's missing authorization or a validated PowerA mapping.
+
+## Retained validation files
+
+[The validation archive](evidence/switch-pro-validation-2026-11-06.tar.gz) contains 38 text files: CI logs, Swift-generated mapping snapshots, a signing-configuration template, the bounded cleanup record and a manifest of source and published SHA-256 hashes. It is independent of expiring GitHub Actions artifacts. Personal home paths and the local signing team identifier are redacted; Xcode window state, user-profile hashes and signing credentials are excluded. The signing template uses `YOUR_TEAM_ID` and is not applied automatically.
+
+Archive SHA-256: `d747276995cfb38acc5d48d950cab01ee26c6f9fa1206dfe7b010bd6d32e541b`.
+
+The archive retains failed checks as well as their passing reruns. It does not establish a passing final Swift suite or hardware compatibility. No generated build or dependency directory is required from the originating Mac.
