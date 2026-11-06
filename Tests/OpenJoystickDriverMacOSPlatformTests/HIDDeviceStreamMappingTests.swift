@@ -18,6 +18,42 @@ struct HIDDeviceStreamMappingTests {
   }
 
   @Test
+  func onlyTheExactPowerALicProBluetoothIdentityDisablesNativePassThrough() {
+    #expect(
+      HIDDeviceStream.isPowerALicProBluetooth(
+        vendorID: 0,
+        productID: 0,
+        productName: "Lic Pro Controller",
+        transport: kIOHIDTransportBluetoothValue
+      )
+    )
+    #expect(
+      !HIDDeviceStream.isPowerALicProBluetooth(
+        vendorID: 0,
+        productID: 0,
+        productName: "Other Controller",
+        transport: kIOHIDTransportBluetoothValue
+      )
+    )
+    #expect(
+      !HIDDeviceStream.isPowerALicProBluetooth(
+        vendorID: 0,
+        productID: 0,
+        productName: "Lic Pro Controller",
+        transport: kIOHIDTransportBluetoothLowEnergyValue
+      )
+    )
+    #expect(
+      !HIDDeviceStream.isPowerALicProBluetooth(
+        vendorID: 1,
+        productID: 1,
+        productName: "Lic Pro Controller",
+        transport: kIOHIDTransportBluetoothValue
+      )
+    )
+  }
+
+  @Test
   func theBluetoothLEHubReportsTheIOHIDBluetoothLowEnergyTransport() {
     #expect(
       Switch2BluetoothLEProfile.hidTransportProperty == kIOHIDTransportBluetoothLowEnergyValue

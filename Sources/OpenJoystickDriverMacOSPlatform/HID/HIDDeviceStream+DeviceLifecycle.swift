@@ -48,7 +48,9 @@ extension HIDDeviceStream {
     let nativePassThrough = Self.nativePassThrough(
       device,
       vendorID: model.vendorID,
-      productID: model.productID
+      productID: model.productID,
+      productName: productName,
+      transport: transport
     )
     guard
       eventAdapter.add(
@@ -93,12 +95,37 @@ extension HIDDeviceStream {
 
   /// macOS already serves a native gamepad, so OJD only observes its input and never seizes it,
   /// unless the controller's record takes ownership for OJD.
-  static func nativePassThrough(_ device: IOHIDDevice, vendorID: UInt16, productID: UInt16) -> Bool
-  {
+  static func nativePassThrough(
+    _ device: IOHIDDevice,
+    vendorID: UInt16,
+    productID: UInt16,
+    productName: String?,
+    transport: String?
+  ) -> Bool {
     GCController.supportsHIDDevice(device)
+      && !isPowerALicProBluetooth(
+        vendorID: vendorID,
+        productID: productID,
+        productName: productName,
+        transport: transport
+      )
       && !DeviceCatalog.current.withLock {
         $0.takesOwnership(of: ControllerModelID(vendorID: vendorID, productID: productID))
       }
+  }
+
+  /// OJD must read this exact Bluetooth HID identity because GameController advertises support but
+  /// does not publish the controller to applications.
+  static func isPowerALicProBluetooth(
+    vendorID: UInt16,
+    productID: UInt16,
+    productName: String?,
+    transport: String?
+  ) -> Bool {
+    vendorID == 0
+      && productID == 0
+      && productName == "Lic Pro Controller"
+      && transport == kIOHIDTransportBluetoothValue
   }
 
   /// Admits again each tracked device of a model in `models` whose native pass-through no
@@ -119,7 +146,13 @@ extension HIDDeviceStream {
       guard let device = devicesByID[deviceID], let vendorID = connection.physicalDevice.vendorID,
         let productID = connection.physicalDevice.productID
       else { return connection.physicalDevice.nativePassThrough }
-      return Self.nativePassThrough(device, vendorID: vendorID, productID: productID)
+      return Self.nativePassThrough(
+        device,
+        vendorID: vendorID,
+        productID: productID,
+        productName: connection.physicalDevice.productName,
+        transport: connection.physicalDevice.transportProperty
+      )
     }
     let cycledDevices = cycled.sorted().compactMap { devicesByID[$0] }
     for device in cycledDevices { handleDeviceRemoved(device) }

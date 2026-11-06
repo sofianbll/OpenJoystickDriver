@@ -39,4 +39,4 @@ Use a maintainer-signed test build with the existing virtual HID entitlement. In
 
 ## PowerA follow-up
 
-The reported PowerA appears as `Lic Pro Controller` with `0000:0000` over Bluetooth. The output persona does not change OJD's physical admission or ownership rules. Before connecting a real source, establish a precise descriptor/name/transport match and an isolated regression test. Never seize every device with vendor zero. Only after that source path is approved and tested can physical PowerA presses establish end-to-end support.
+The reported PowerA appears as `Lic Pro Controller` with `0000:0000` over Bluetooth. OJD's HID admission has an exact exception for that VID, PID, product name and Bluetooth transport, so it seizes that device for descriptor-driven input instead of leaving it to macOS. Other `0000:0000` devices do not match. The isolated identity test passes; physical PowerA input, GameController enumeration, Steam/SDL, feedback and teardown remain not verified.
