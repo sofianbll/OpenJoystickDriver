@@ -13,9 +13,8 @@ struct VirtualHostReportTests {
       input: input,
       sender: UserSpaceReportSender(),
       isOpen: { true },
-      onOutput: nil,
-      onRumbleStatus: { _ in }
-    )
+      onOutput: nil
+    ) { _ in }
     try handler.validateSetReportSize(64)
     #expect(throws: VirtualHostReportError.malformed) { try handler.validateSetReportSize(-1) }
     #expect(throws: VirtualHostReportError.tooLarge) { try handler.validateSetReportSize(65) }
