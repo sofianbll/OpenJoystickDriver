@@ -85,6 +85,28 @@ struct VirtualHIDProfileOverrideStoreTests {
   }
 
   @Test
+  func aZeroVendorAndProductOverrideRoundTripsForModelAndUnit() throws {
+    try withDirectory { directory in
+      let store = Store(directory: directory)
+      try store.set(.switchPro, vendorID: 0, productID: 0)
+      try store.set(.generic, vendorID: 0, productID: 0, unit: Self.unit)
+
+      let reloaded = Store(directory: directory)
+      #expect(reloaded.override(vendorID: 0, productID: 0) == .switchPro)
+      #expect(reloaded.override(vendorID: 0, productID: 0, unit: Self.unit) == .generic)
+      #expect(reloaded.problems.isEmpty)
+
+      try store.reset(vendorID: 0, productID: 0, unit: Self.unit)
+      #expect(
+        Store(directory: directory).override(vendorID: 0, productID: 0, unit: Self.unit)
+          == .switchPro
+      )
+      try store.reset(vendorID: 0, productID: 0)
+      #expect(Store(directory: directory).files.isEmpty)
+    }
+  }
+
+  @Test
   func overridesAreIsolatedPerControllerModel() throws {
     try withDirectory { directory in
       let store = Store(directory: directory)

@@ -140,7 +140,7 @@ extension VirtualDevice {
       throw ControllerRecordProblem(code: .invalidControllerRecord, "match.unit is not a unit ID")
     }
     return VirtualHIDProfileOverrideStore.Model(
-      vendorID: try id(match["vendorID"], "match.vendorID", from: 1),
+      vendorID: try id(match["vendorID"], "match.vendorID", from: 0),
       productID: try id(match["productID"], "match.productID", from: 0),
       unit: unit
     )

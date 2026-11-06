@@ -16,6 +16,13 @@ OJD SHALL offer `SwitchPro` through the app's virtual profile picker, CLI and en
 - **THEN** its published identity is USB `057E:2009` with a Nintendo Pro Controller product name
 - **AND** the choice persists through the existing override mechanism
 
+#### Scenario: Select output for a zero-vendor physical controller
+
+- **WHEN** a user selects a profile for an admitted physical controller with VID:PID `0000:0000`
+- **THEN** the model or unit override persists and is accepted when read
+- **AND** a unit override takes precedence over the model override
+- **AND** the published virtual identity still requires a nonzero vendor ID
+
 #### Scenario: No explicit Nintendo choice
 
 - **WHEN** a user has no profile override

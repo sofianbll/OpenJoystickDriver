@@ -47,6 +47,28 @@ struct VirtualDeviceTests {
   }
 
   @Test
+  func aPublishedIdentityRefusesAZeroVendorID() {
+    let document =
+      "{\(Self.header),\"persona\":\"SwitchPro\","
+      + "\"match\":{\"vendorID\":1,\"productID\":2},"
+      + "\"identity\":{\"vendorID\":0,\"productID\":1,"
+      + "\"productName\":\"Gamepad\",\"manufacturer\":\"Test\"}}"
+    #expect(throws: ControllerRecordProblem.self) {
+      try VirtualDevice.decode(Data(document.utf8), source: .unnamed, requiresMatch: true)
+    }
+  }
+
+  @Test(arguments: ["-1", "65536", "1.5", "true", #""0""#])
+  func aMatchRefusesAnInvalidVendorID(vendorID: String) {
+    let document =
+      "{\(Self.header),\"persona\":\"SwitchPro\","
+      + "\"match\":{\"vendorID\":\(vendorID),\"productID\":0}}"
+    #expect(throws: ControllerRecordProblem.self) {
+      try VirtualDevice.decode(Data(document.utf8), source: .unnamed, requiresMatch: true)
+    }
+  }
+
+  @Test
   func aSelectionRecordHoldsNoHintsField() {
     let document =
       "{\(Self.header),\"persona\":\"Generic\","

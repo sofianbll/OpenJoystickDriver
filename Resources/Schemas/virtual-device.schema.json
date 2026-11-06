@@ -26,8 +26,9 @@
       "required": ["vendorID", "productID"],
       "properties": {
         "vendorID": {
+          "description": "The physical controller's observed vendor ID, including zero.",
           "type": "integer",
-          "minimum": 1,
+          "minimum": 0,
           "maximum": 65535
         },
         "productID": {

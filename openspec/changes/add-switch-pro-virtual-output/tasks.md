@@ -64,3 +64,18 @@ CI authorization (2026-11-06): Sofian approved a public `sofianbll/OpenJoystickD
 - Request a maintainer-signed tester build when appropriate. Installation, permissions, real virtual-device activation and physical controller tests require separate consent.
 - Investigate the PowerA `0000:0000` admission path separately with precise matching and regression tests, never a global vendor-zero override.
 - Archive only after the implementation and its offline checks are complete, retaining unverified consumer/hardware status explicitly.
+
+## 5. Zero-vendor profile persistence
+
+Scope approved by Sofian (2026-11-06): fix profile selection validation, schema and tests for the admitted PowerA. Do not change signing, permissions, user settings, physical mapping, installation or publication.
+
+- [x] Reproduce rejection of the saved `0000:0000` SwitchPro selection with the Swift repository validator: `E5007`, `match.vendorID must be 1...65535`. Add a schema regression that fails for model and unit matches before the fix.
+- [x] Accept observed vendor ID zero in physical selection matches in Swift and JSON Schema, retaining the nonzero vendor requirement for published identities. Add store reload, unit precedence/reset and invalid-input regressions.
+- [x] Run available offline checks: all 9 `test_virtual_device_schema` tests pass; all 15 schema documents validate; the saved model and unit choices pass JSON Schema; Swift format, the schema's pinned Biome check and `git diff --check` pass. The schema regression failed on both zero-vendor matches before the fix.
+- [ ] Build and execute the focused Swift store/decoder tests. The build stops at the repository's toolchain gate: installed Swift 6.4.2, required 6.4.0. `just check` stops with exit 127 because `just` is absent. No toolchain pin is changed or bypassed, and the existing Swift validator binary does not contain the fix.
+- [x] Record the operator's successful Xcode rebuild and SwitchPro picker selection. Independent inspection confirms the rebuilt executable's 13:06:49 Europe/Paris timestamp and valid code signature. Swift tests on the supported toolchain and an independently observed UI test remain unverified. No personal settings are edited.
+- [ ] Establish correct PowerA physical mapping and Apple-authorized virtual publication. The inspected app has no `com.apple.developer.hid.virtual.device` entitlement or embedded provisioning profile. The saved unit-level SDLCompatible choice takes precedence over the model-level SwitchPro choice. Input Test receives controls, but the operator reports incorrect mapping and cannot locate the gamepad assignment destinations.
+
+## Pause disposition
+
+Sofian requested pausing the mapping work and approved publishing the source, tests and evidence to `sofianbll/OpenJoystickDriver` on `feat/switch-pro-virtual-output`. The approved local cleanup keeps the source checkout, privately preserves personal Xcode settings and validation evidence, and removes disposable builds, dependency caches, the test app's DerivedData and the downloaded WWDR certificate copies. Xcode, Keychain identities, user controller settings and other projects are excluded. The change is not archived as complete: supported-toolchain regression execution and end-to-end hardware acceptance remain open. No upstream pull request or release is requested.

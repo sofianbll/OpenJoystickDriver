@@ -41,13 +41,15 @@ class VirtualDeviceSchemaTests(unittest.TestCase):
                 self.validator.validate(load(name))
 
     def test_a_match_record_selects_a_persona_without_a_layout(self) -> None:
-        self.validator.validate(
-            {
-                **HEADER,
-                "persona": "SDLCompatible",
-                "match": {"vendorID": 1, "productID": 2},
-            }
-        )
+        for match in (
+            {"vendorID": 1, "productID": 2},
+            {"vendorID": 0, "productID": 0},
+            {"vendorID": 0, "productID": 0, "unit": "U-AbCd_123-xyzW09q"},
+        ):
+            with self.subTest(match=match):
+                self.validator.validate(
+                    {**HEADER, "persona": "SwitchPro", "match": match}
+                )
 
     def test_a_bad_header_is_refused(self) -> None:
         for document in (
@@ -92,7 +94,11 @@ class VirtualDeviceSchemaTests(unittest.TestCase):
         for match in (
             {"vendorID": 1},
             {"productID": 2},
-            {"vendorID": 0, "productID": 2},
+            {"vendorID": -1, "productID": 2},
+            {"vendorID": 65536, "productID": 2},
+            {"vendorID": 1.5, "productID": 2},
+            {"vendorID": True, "productID": 2},
+            {"vendorID": "0", "productID": 2},
             {"vendorID": 1, "productID": 65536},
             {"vendorID": 1, "productID": 2, "unit": "not-a-unit"},
             {"vendorID": 1, "productID": 2, "extra": True},
@@ -116,6 +122,11 @@ class VirtualDeviceSchemaTests(unittest.TestCase):
                 self.refuses(document)
         document = load("virtual-device.generic.json")
         del document["identity"]["version"]
+        self.refuses(document)
+
+    def test_a_published_identity_refuses_a_zero_vendor_id(self) -> None:
+        document = load("virtual-device.generic.json")
+        document["identity"]["vendorID"] = 0
         self.refuses(document)
 
     def test_a_definition_refuses_unknown_members_and_values(self) -> None:
